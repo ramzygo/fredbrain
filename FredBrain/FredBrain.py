@@ -11,7 +11,7 @@ import concurrent.futures
 
 
 def check_rate_limit(url):
-    response = requests.get(url)
+    response = requests.get(url, timeout=30)
     if response.status_code == 200:
         limit = response.headers.get('x-rate-limit-limit')
         remaining = response.headers.get('x-rate-limit-remaining')
@@ -94,7 +94,7 @@ class FredBrain:
         formatted_search_text = '+'.join(search_text.split())
         url = f"{self.root_url}/series/search?search_text={formatted_search_text}&api_key={self.fred_api_key}&file_type=json"
         # Make the API call
-        response = requests.get(url)
+        response = requests.get(url, timeout=30)
         # Check if the response status code is 200 (OK)
         if response.status_code == 200:
             try:
@@ -168,7 +168,7 @@ class FredBrain:
         categories = []  # This will collect DataFrame pieces
         for category_id in range(start_id, end_id + 1):  # Ensure end_id is included
             url = f"{self.root_url}/category?category_id={category_id}&api_key={self.fred_api_key}&file_type=json"
-            response = requests.get(url)
+            response = requests.get(url, timeout=30)
             if response.status_code == 200:
                 data = response.json()
                 # Check if response contains 'categories' data
@@ -233,7 +233,7 @@ class FredBrain:
         for _, category_row in all_categories.iterrows():
             category_id = category_row['id']
             series_url = f"{self.root_url}/category/series?category_id={category_id}&api_key={self.fred_api_key}&file_type=json"
-            response = requests.get(series_url)
+            response = requests.get(series_url, timeout=30)
             if response.status_code == 200:
                 series_data = response.json()
                 if 'seriess' in series_data and series_data['seriess']:
@@ -259,7 +259,7 @@ class FredBrain:
         """
         url = f"{self.root_url}/series?series_id={series_id}&api_key={self.fred_api_key}&file_type=json"
         try:
-            response_api = requests.get(url)
+            response_api = requests.get(url, timeout=30)
             if response_api.status_code == 200:
                 data = response_api.json()
                 series_info = data['seriess'][0]  # Get the first item from the list
@@ -388,7 +388,7 @@ class FredBrain:
         """
         url = f"{self.root_url}/series/observations?series_id={series_id}&api_key={self.fred_api_key}&file_type=json"
         url_website = "https://fred.stlouisfed.org/series/%s" % series_id
-        response_api = requests.get(url)
+        response_api = requests.get(url, timeout=30)
         if response_api.status_code == 200:
             try:
                 df = self.transform_series(response_api, series_id)
@@ -466,7 +466,7 @@ class FredBrain:
         realtime_end = realtime_end or self.latest_realtime_end
         url = f"{self.root_url}/series/observations?series_id={series_id}&realtime_start={realtime_start}&realtime_end={realtime_end}&api_key={self.fred_api_key}&file_type=json"
         url_website = "https://fred.stlouisfed.org/series/%s" % series_id
-        response_api = requests.get(url)
+        response_api = requests.get(url, timeout=30)
         if response_api.status_code == 200:
             try:
                 df = self.transform_series(response_api, series_id, include_realtime=True)
@@ -594,7 +594,7 @@ class FredBrain:
         url = "%s/series/observations?series_id=%s&api_key=%s&file_type=json" % (
             self.root_url, series_id, self.fred_api_key)
         url_website = "https://fred.stlouisfed.org/series/%s" % series_id
-        response_api = requests.get(url)
+        response_api = requests.get(url, timeout=30)
         if response_api.status_code == 200:
             try:
                 return url_website
