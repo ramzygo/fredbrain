@@ -2,6 +2,7 @@ import mysql.connector
 import pandas as pd
 from mysql.connector import Error
 import time
+import re
 
 
 class MySQLBrain:
@@ -30,6 +31,12 @@ class MySQLBrain:
         self.conn = None
         self.cursor = None
         self.connect()
+
+    @staticmethod
+    def _validate_identifier(name):
+        if not re.match(r'^[a-zA-Z_][a-zA-Z0-9_]*$', name):
+            raise ValueError(f"Invalid SQL identifier: {name!r}")
+        return name
 
     def connect(self):
         """
@@ -119,14 +126,15 @@ class MySQLBrain:
         db_manager.check_create_database('example_database')
         """
         try:
-            self.cursor.execute(f"SHOW DATABASES LIKE '{db_name}'")
+            self._validate_identifier(db_name)
+            self.cursor.execute("SHOW DATABASES LIKE %s", (db_name,))
             result = self.cursor.fetchone()
             if result:
                 print(f"Database already exists: {db_name}")
             else:
-                self.cursor.execute(f"CREATE DATABASE {db_name}")
+                self.cursor.execute(f"CREATE DATABASE `{db_name}`")
                 print("Database created successfully.")
-        except Error as e:
+        except (Error, ValueError) as e:
             print(f"Failed to check or create database: {e}")
 
     def list_tables(self):
@@ -177,7 +185,7 @@ class MySQLBrain:
         exists = db_manager.check_table_exists('example_table')
         """
         try:
-            self.cursor.execute(f"SHOW TABLES LIKE '{table_name}'")
+            self.cursor.execute("SHOW TABLES LIKE %s", (table_name,))
             result = self.cursor.fetchone()
             if result is not None:  # If result is not None (i.e., the table exists)
                 print(f"Table already exists: {table_name}")
@@ -212,6 +220,9 @@ class MySQLBrain:
         Usage Example:
         db_manager.fred_insert_into_table('example_table', dataframe)
         """
+        self._validate_identifier(table_name)
+        for col in df.columns:
+            self._validate_identifier(col)
         column_names = ', '.join([f"`{column}`" for column in df.columns])
         placeholders = ', '.join(['%s' for _ in df.columns])
         sql_insert_statement = f"INSERT INTO `{table_name}` ({column_names}) VALUES ({placeholders})"
@@ -295,6 +306,7 @@ class MySQLBrain:
             columns_with_types.append(f"`{index}` {sqldtype}")
             columns_with_headers.append(f"{index}")
         columns_type_sql = ', '.join(columns_with_types)
+        self._validate_identifier(table_name)
         if self.check_table_exists(table_name) is False:
             print(f"SQL Statement - Create Table:\nCREATE TABLE IF NOT EXISTS `{table_name}` ({columns_type_sql})")
             self.cursor.execute(f"CREATE TABLE IF NOT EXISTS `{table_name}` ({columns_type_sql})")
@@ -341,6 +353,9 @@ class MySQLBrain:
         # existing_df = pd.DataFrame(existing_rows, columns=df.columns.to_list())
         # print(len(existing_df))
         # print(existing_df)
+        self._validate_identifier(table_name)
+        for col in df.columns:
+            self._validate_identifier(col)
         print("Creating temporary SQL table")
         temp_table_name = f"temp_{table_name}"
         create_temp_table_sql = f"CREATE TABLE `{temp_table_name}` LIKE `{table_name}`;"
