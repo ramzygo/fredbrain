@@ -271,7 +271,7 @@ class FredBrain:
             else:
                 print(f"Failed to fetch {series_id}: Status {response_api.status_code}")
                 return pd.Series({"error": f"HTTP Status {response_api.status_code}"})
-        except Exception as e:
+        except (requests.RequestException, ValueError, KeyError) as e:
             print(f"Exception while fetching {series_id}: {str(e)}")
             return pd.Series({"error": str(e)})
 
@@ -323,7 +323,7 @@ class FredBrain:
                         print(f"Series ID {series_id} fetched successfully.")
                     else:
                         print(f"Error fetching series ID {series_id}: {data['error']}")
-                except Exception as exc:
+                except (requests.RequestException, ValueError, KeyError) as exc:
                     print(f"Series ID {series_id} generated an exception: {exc}")
         return pd.DataFrame(results)
 
@@ -449,7 +449,7 @@ class FredBrain:
                         results.append(data)
                     else:
                         print(f'Error fetching series ID {series_id}: No data returned.')
-                except Exception as exc:
+                except (requests.RequestException, ValueError, KeyError) as exc:
                     print(f"Series ID {series_id} generated an exception: {exc}")
         if results:
             return pd.concat(results, ignore_index=True)
@@ -520,7 +520,7 @@ class FredBrain:
                         results.append(data)
                     else:
                         print(f"Error fetching series ID {series_id}: No data returned.")
-                except Exception as exc:
+                except (requests.RequestException, ValueError, KeyError) as exc:
                     print(f"Series ID {series_id} generated an exception: {exc}")
         if results:
             return pd.concat(results, ignore_index=True)
@@ -582,7 +582,7 @@ class FredBrain:
                         results.append(data)
                     else:
                         print(f"Error fetching series ID {series_id}: No data returned.")
-                except Exception as exc:
+                except (requests.RequestException, ValueError, KeyError) as exc:
                     print(f"Series ID {series_id} generated an exception: {exc}")
         if results:
             return pd.concat(results, ignore_index=True)
@@ -650,6 +650,6 @@ class FredBrain:
             )
             # Return the text response
             return response['choices'][0]['message']['content']
-        except Exception as e:  # General exception handling, consider specifying the exception
+        except openai.OpenAIError as e:
             print("An error occurred while querying the OpenAI API:", e)
             return None
